@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -147,11 +148,17 @@ func parseLsof() ([]PortEntry, error) {
 }
 
 func clearScreen() {
-	switch runtime.GOOS {
-	case "windows":
-		exec.Command("cmd", "/c", "cls").Run()
-	default:
-		exec.Command("clear").Run()
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Printf("failed to clear screen: %v", err)
+		}
+		return
+	}
+	if _, err := fmt.Fprint(os.Stdout, "\033[H\033[2J"); err != nil {
+		log.Printf("failed to clear screen: %v", err)
 	}
 }
 
